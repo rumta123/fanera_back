@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+
+    /* 👉 добавь это: */
+    "types": ["node"],                  // чтобы видеть типы NodeJS (fs, path, process и т.д.)
+    "moduleDetection": "force",         // улучшает работу с ESM/CommonJS в NodeNext
+    "allowJs": true,                    // позволяет использовать .js при необходимости
+
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
