@@ -26,35 +26,53 @@ export class BatchFactsService {
     return fact;
   }
 
+  // src/batch-facts/batch-facts.service.ts
+
   async create(dto: CreateBatchFactDto): Promise<BatchFact> {
-    // Проверяем, что партия и продукт (сырьё) существуют
     await this.batchesService.findOne(dto.batch_id);
     await this.productsService.findOne(dto.product_id);
 
     const fact = this.factRepo.create(dto);
-    return this.factRepo.save(fact);
+    const savedFact = await this.factRepo.save(fact);
+
+    // 👇 Пересчитываем себестоимость после создания
+    await this.batchesService.recalculateActualCost(dto.batch_id);
+
+    return savedFact;
   }
 
   async update(id: number, dto: UpdateBatchFactDto): Promise<BatchFact> {
-    const exists = await this.factRepo.existsBy({ id });
-    if (!exists) {
-      throw new NotFoundException(`Факт расхода с ID ${id} не найден`);
+    const fact = await this.findOne(id); // используем существующий метод для получения старых данных
+
+    if ("batch_id" in dto && dto.batch_id) {
+      await this.batchesService.findOne(dto.batch_id);
+    }
+    if ("product_id" in dto && dto.product_id) {
+      await this.productsService.findOne(dto.product_id);
     }
 
-    if ("batch_id" in dto && dto.batch_id)
-      await this.batchesService.findOne(dto.batch_id);
-    if ("product_id" in dto && dto.product_id)
-      await this.productsService.findOne(dto.product_id);
-
     await this.factRepo.update(id, dto);
-    return this.findOne(id);
+    const updatedFact = await this.findOne(id);
+
+    // 👇 Пересчитываем себестоимость
+    // Используем новый batch_id, если он был изменён, иначе — старый
+    const targetBatchId =
+      "batch_id" in dto && dto.batch_id ? dto.batch_id : fact.batch_id;
+    await this.batchesService.recalculateActualCost(targetBatchId);
+
+    return updatedFact;
   }
 
   async remove(id: number): Promise<void> {
+    const fact = await this.findOne(id); // получаем данные до удаления
+
     const result = await this.factRepo.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Факт расхода с ID ${id} не найден`);
     }
+
+    // 👇 Пересчитываем себестоимость после удаления
+    await this.batchesService.recalculateActualCost(fact.batch_id);
   }
 
   // Опционально: получить все факты по партии

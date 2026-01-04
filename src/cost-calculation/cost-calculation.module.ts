@@ -21,5 +21,6 @@ import { CostCalculationService } from "./cost-calculation.service";
   ],
   controllers: [CostCalculationController],
   providers: [CostCalculationService],
+  exports: [CostCalculationService],
 })
 export class CostCalculationModule {}

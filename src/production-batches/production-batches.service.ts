@@ -1,4 +1,3 @@
-// src/production-batches/production-batches.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -13,6 +12,7 @@ import {
 } from "./dto/production-batch.dto";
 import { ProductsService } from "../products/products.service";
 import { WorkshopService } from "../workshops/workshops.service";
+import { CostCalculationService } from "../cost-calculation/cost-calculation.service";
 
 @Injectable()
 export class ProductionBatchesService {
@@ -21,6 +21,7 @@ export class ProductionBatchesService {
     private batchRepo: Repository<ProductionBatch>,
     private productsService: ProductsService,
     private workshopService: WorkshopService,
+    private costCalculationService: CostCalculationService,
   ) {}
 
   findAll(): Promise<ProductionBatch[]> {
@@ -40,6 +41,7 @@ export class ProductionBatchesService {
       isProfit: variance < 0, // true = "в плюс", false = "в минус"
     };
   }
+
   async findOne(id: number): Promise<ProductionBatch> {
     const batch = await this.batchRepo.findOneBy({ id });
     if (!batch) throw new NotFoundException(`Партия с ID ${id} не найдена`);
@@ -89,5 +91,11 @@ export class ProductionBatchesService {
     if (result.affected === 0) {
       throw new NotFoundException(`Партия с ID ${id} не найдена`);
     }
+  }
+
+  // Вспомогательный метод — пересчитать фактическую себестоимость партии
+  async recalculateActualCost(batch_id: number): Promise<void> {
+    // calculateBatchCost сохранит actual_cost в базе (если всё прошло успешно)
+    await this.costCalculationService.calculateBatchCost(batch_id);
   }
 }

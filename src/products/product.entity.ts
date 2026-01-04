@@ -40,6 +40,8 @@ export class Product {
   unit: string; // 'м³', 'кг', 'лист'
 
   // ⬇️ НОВОЕ ПОЛЕ: себестоимость единицы измерения (руб/м³, руб/кг, руб/лист)
-  @Column({ type: "float", nullable: true })
-  cost: number | null; // можно оставить null — тогда материал не учитывается в расчёте
+  // @Column({ type: "float", nullable: true })
+  // cost: number | null; // можно оставить null — тогда материал не учитывается в расчёте
+  @Column({ type: "float", nullable: true, name: "cost_per_unit" })
+  cost_per_unit: number | null;
 }

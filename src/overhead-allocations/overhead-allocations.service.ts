@@ -59,9 +59,12 @@ export class OverheadAllocationsService {
   }
 
   async remove(id: number): Promise<void> {
-    const result = await this.allocationRepo.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Распределение с ID ${id} не найдено`);
+    const allocation = await this.allocationRepo.findOneBy({ id });
+    await this.allocationRepo.delete(id);
+
+    if (allocation) {
+      // 🔥 ДОБАВЬТЕ ЭТУ СТРОКУ:
+      await this.batchesService.recalculateActualCost(allocation.batch_id);
     }
   }
 

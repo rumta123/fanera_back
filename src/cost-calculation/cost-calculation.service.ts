@@ -47,9 +47,14 @@ export class CostCalculationService {
       const inputProduct = await this.productRepo.findOneBy({
         id: fact.product_id,
       });
-      if (!inputProduct || inputProduct.cost == null) continue; // пропускаем без цены
 
-      const total = fact.actual_quantity * inputProduct.cost;
+      // ✅ Проверяем наличие сырья и цены за единицу
+      // В текущей модели поле называется `cost_per_unit`
+      if (!inputProduct || inputProduct.cost_per_unit == null) {
+        continue; // Пропускаем сырьё без указанной цены
+      }
+
+      const total = fact.actual_quantity * inputProduct.cost_per_unit;
       totalMaterialCost += total;
 
       materials.push({
@@ -57,7 +62,7 @@ export class CostCalculationService {
         product_name: inputProduct.name,
         unit: inputProduct.unit,
         quantity: fact.actual_quantity,
-        unit_cost: inputProduct.cost,
+        unit_cost: inputProduct.cost_per_unit,
         total_cost: parseFloat(total.toFixed(2)),
       });
     }
@@ -81,6 +86,18 @@ export class CostCalculationService {
     const totalCost = totalMaterialCost + totalOverheadCost;
     const quantity = batch.actual_quantity ?? batch.planned_quantity;
     const costPerUnit = quantity > 0 ? totalCost / quantity : 0;
+    // Сохраняем рассчитанную фактическую себестоимость в партию (actual_cost)
+    try {
+      await this.batchRepo.update(batch.id, {
+        actual_cost: parseFloat(totalCost.toFixed(2)),
+      });
+    } catch (err) {
+      // Не критично для расчёта — логируем, но продолжаем возвращать отчёт
+      console.error(
+        `Failed to update batch.actual_cost for batch ${batch.id}:`,
+        err,
+      );
+    }
 
     return {
       batch_id: batch.id,
