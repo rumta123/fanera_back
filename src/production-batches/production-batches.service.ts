@@ -91,6 +91,7 @@ export class ProductionBatchesService {
     if (result.affected === 0) {
       throw new NotFoundException(`Партия с ID ${id} не найдена`);
     }
+    // Пересчёт не нужен — всё удалилось каскадно
   }
 
   // Вспомогательный метод — пересчитать фактическую себестоимость партии

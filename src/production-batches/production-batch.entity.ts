@@ -5,9 +5,12 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from "typeorm";
 import { Product } from "../products/product.entity";
 import { Workshop } from "../workshops/workshop.entity";
+import { BatchFact } from "../batch-facts/batch-fact.entity";
+import { OverheadAllocation } from "../overhead-allocations/overhead-allocation.entity";
 
 // Типы статусов — можно вынести в enum, но для простоты используем string
 const BATCH_STATUSES = ["в работе", "завершена", "отменена"] as const;
@@ -50,10 +53,24 @@ export class ProductionBatch {
     default: "в работе",
   })
   status: BatchStatus;
-  // 🔹 НОВЫЕ ПОЛЯ СЕБЕСТОИМОСТИ
+
+  // 🔹 Плановая и фактическая себестоимость всей партии
   @Column({ type: "decimal", precision: 12, scale: 2, nullable: true })
-  planned_cost?: number | null; // Плановая себестоимость всей партии
+  planned_cost?: number | null;
 
   @Column({ type: "decimal", precision: 12, scale: 2, nullable: true })
-  actual_cost?: number | null; // Фактическая себестоимость всей партии
+  actual_cost?: number | null;
+
+  // 🔹 СВЯЗИ ДЛЯ КАСКАДНОГО УДАЛЕНИЯ
+  @OneToMany(() => BatchFact, (fact) => fact.batch, {
+    cascade: true,
+    onDelete: "CASCADE",
+  })
+  facts: BatchFact[];
+
+  @OneToMany(() => OverheadAllocation, (alloc) => alloc.batch, {
+    cascade: true,
+    onDelete: "CASCADE",
+  })
+  overheads: OverheadAllocation[];
 }
